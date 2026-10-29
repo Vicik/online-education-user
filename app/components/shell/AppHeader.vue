@@ -36,24 +36,6 @@ import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
           {{ item.label }}
         </NuxtLink>
       </nav>
-
-      <details
-        class="mobile-navigation"
-        data-testid="mobile-navigation"
-      >
-        <summary>菜单</summary>
-        <nav aria-label="移动端主导航">
-          <NuxtLink
-            v-for="item in NAV_ITEMS"
-            :key="item.to"
-            :to="item.to"
-            active-class="is-active"
-            :exact="item.to === '/'"
-          >
-            {{ item.label }}
-          </NuxtLink>
-        </nav>
-      </details>
     </div>
   </header>
 </template>
@@ -73,7 +55,7 @@ import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: min(calc(100% - 2rem), var(--page-width));
+  width: var(--page-width);
   min-height: var(--header-height);
   margin-inline: auto;
   gap: 2rem;
@@ -157,64 +139,5 @@ import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
 .navigation-link.is-active::after {
   height: 0.58rem;
   background: var(--color-indigo);
-}
-
-.mobile-navigation {
-  display: none;
-  position: relative;
-}
-
-.mobile-navigation summary {
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--color-line);
-  border-radius: 0.5rem;
-  background: var(--color-surface);
-  cursor: pointer;
-  font-weight: 650;
-  list-style: none;
-}
-
-.mobile-navigation summary::-webkit-details-marker {
-  display: none;
-}
-
-.mobile-navigation nav {
-  position: absolute;
-  top: calc(100% + 0.65rem);
-  right: 0;
-  display: grid;
-  width: 10rem;
-  overflow: hidden;
-  border: 1px solid var(--color-line);
-  border-radius: 0.75rem;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-soft);
-}
-
-.mobile-navigation nav a {
-  padding: 0.8rem 1rem;
-  color: var(--color-muted);
-}
-
-.mobile-navigation nav a:hover,
-.mobile-navigation nav a.is-active {
-  background: var(--color-jade-soft);
-  color: var(--color-jade);
-}
-
-@media (max-width: 52rem) {
-  .desktop-navigation {
-    display: none;
-  }
-
-  .mobile-navigation {
-    display: block;
-  }
-}
-
-@media (max-width: 28rem) {
-  .brand-copy small {
-    display: none;
-  }
 }
 </style>

@@ -163,12 +163,14 @@ git commit -m "feat: add typed REST API client"
 - Produces: `courseSchema(course: CourseSeoSource): Record<string, unknown>`.
 - Produces: `articleSchema(article: ArticleSeoSource): Record<string, unknown>`.
 - Produces: `breadcrumbSchema(items: BreadcrumbItem[]): Record<string, unknown>`.
-- Produces: `getSitemapSources(): SitemapSource[]` for separate course, exam, promotion, and community sitemap sources.
+- Produces: `getSitemapSources(apiBase?: string): SitemapSource[]` as typed descriptors of the approved course, exam, promotion, and community public API paths. These descriptors are not passed directly to `@nuxtjs/sitemap` because the APIs return `ApiList<T>`, not sitemap URL arrays.
+- Produces: `collectSitemapUrls<T>(fetchPage, toEntry): Promise<SitemapUrlEntry[]>`, a domain-neutral paginator that follows `ApiList<T>.page/pageSize/total`, stops safely on an empty page, and delegates domain route mapping to Tasks 5–8.
 - Produces: `normalizePage(value: unknown): number`, returning 1 for invalid values.
+- Defers: dynamic sitemap URL projection and source wiring to Tasks 5–8, where each domain's `slug`, optional `updatedAt`, public route prefix, and pagination contract are defined.
 
 - [ ] **Step 1: Write failing SEO utility tests**
 
-Assert canonical URLs are absolute and query-free unless explicitly supplied, `noindex` produces `robots: noindex, nofollow`, JSON-LD contains the required schema type, the four sitemap sources use public API requests, and invalid pagination values normalize to 1.
+Assert canonical URLs are absolute and query-free unless explicitly supplied, `noindex` produces `robots: noindex, nofollow`, JSON-LD contains the required schema type, the four sitemap descriptors contain only approved public API paths, invalid pagination values normalize to 1, and `collectSitemapUrls` exhausts every `ApiList` page without looping after an empty page. Do not treat a paginated `ApiList<T>` endpoint as a module-ready sitemap source.
 
 - [ ] **Step 2: Run the SEO tests and verify failure**
 
@@ -178,7 +180,7 @@ Expected: FAIL because SEO utilities do not exist.
 
 - [ ] **Step 3: Implement the SEO utilities and modules**
 
-Configure site URL/name, robots, separate course/exam/promotion/community sitemaps, and Schema.org support. Add a global `Organization` node and an error page that preserves real 404/500 status semantics.
+Configure site URL/name, robots, named course/exam/promotion/community sitemap definitions without dynamic sources yet, and Schema.org support. Add a global `Organization` node and an error page that preserves real 404/500 status semantics. Keep the Organization URL runtime-resolvable from site config instead of freezing the build-time fallback into the identity object.
 
 - [ ] **Step 4: Verify emitted head content**
 
@@ -251,8 +253,10 @@ git commit -m "feat: build SSR education home page"
 ### Task 5: Course catalogue and course detail
 
 **Files:**
+- Modify: `nuxt.config.ts`
 - Create: `app/features/course/course.types.ts`
 - Create: `app/features/course/course.service.ts`
+- Create: `app/features/course/course.sitemap.ts`
 - Create: `app/features/course/components/CourseFilters.vue`
 - Create: `app/features/course/components/CourseGrid.vue`
 - Create: `app/features/course/components/CourseHero.vue`
@@ -260,23 +264,26 @@ git commit -m "feat: build SSR education home page"
 - Create: `app/components/common/AppPagination.vue`
 - Create: `app/pages/course/index.vue`
 - Create: `app/pages/course/[slug].vue`
+- Create: `server/routes/__sitemap__/courses.ts`
 - Test: `tests/unit/course/course.service.spec.ts`
 - Test: `tests/unit/course/course-pages.spec.ts`
+- Test: `tests/unit/course/course-sitemap.spec.ts`
 - Test: `tests/unit/common/AppPagination.spec.ts`
 
 **Interfaces:**
 - Produces: `CourseDetail extends CourseSummary` with teacher, audience, outline, publishedAt, and updatedAt.
 - Produces: `getCourses(query: CourseQuery): Promise<ApiList<CourseSummary>>` and `getCourse(slug: string): Promise<CourseDetail>`.
 - Produces: crawlable `AppPagination` links.
-- Consumes: `normalizePage`, `courseSchema`, `breadcrumbSchema`, `usePageSeo`.
+- Produces: `/__sitemap__/courses`, returning `{ loc: '/course/<encoded-slug>', lastmod?: updatedAt }[]`, and wires it only to the named `courses` sitemap.
+- Consumes: `normalizePage`, `courseSchema`, `breadcrumbSchema`, `usePageSeo`, and `collectSitemapUrls` from Task 3.
 
 - [ ] **Step 1: Write failing course service tests**
 
-Assert list parameters serialize page/category/keyword, detail uses encoded slug, and an API 404 is preserved for the page layer.
+Assert list parameters serialize page/category/keyword, detail uses encoded slug, and an API 404 is preserved for the page layer. For sitemap collection, assert all `ApiList` pages are fetched exactly once, an empty page terminates safely, slugs are URL-encoded, `updatedAt` maps to `lastmod`, and the public API request path cannot inherit Cookie or Authorization headers.
 
 - [ ] **Step 2: Write failing page and pagination tests**
 
-Assert `page=0`, `page=-2`, and `page=abc` become page 1; pagination renders anchor links; detail emits `Course` and breadcrumb JSON-LD; unknown slug triggers `createError({ statusCode: 404 })`.
+Assert `page=0`, `page=-2`, and `page=abc` become page 1; pagination renders anchor links; detail emits `Course` and breadcrumb JSON-LD; unknown slug triggers `createError({ statusCode: 404 })`; the course sitemap source returns every public course detail URL and no list/filter URLs.
 
 - [ ] **Step 3: Run course tests and verify failure**
 
@@ -284,20 +291,20 @@ Run: `pnpm vitest run tests/unit/course tests/unit/common/AppPagination.spec.ts`
 
 Expected: FAIL because course files do not exist.
 
-- [ ] **Step 4: Implement course services, list page, detail page, and components**
+- [ ] **Step 4: Implement course services, sitemap projection, list page, detail page, and components**
 
-Keep filter state in the URL. Use a canonical URL without empty/default query parameters and SSR all indexable course text.
+Keep filter state in the URL. Use a canonical URL without empty/default query parameters and SSR all indexable course text. Implement the internal `/__sitemap__/courses` route with `defineSitemapEventHandler`; it is an SEO projection only, must return sitemap URL entries rather than proxying business payloads, and must read the independent backend through the public no-credential API path. Wire that internal route to the named `courses` sitemap.
 
 - [ ] **Step 5: Verify course routes**
 
-Run: `pnpm vitest run tests/unit/course tests/unit/common/AppPagination.spec.ts && pnpm nuxi typecheck`
+Run: `pnpm vitest run tests/unit/course tests/unit/common/AppPagination.spec.ts tests/unit/seo/sitemap.spec.ts && pnpm nuxi typecheck`
 
 Expected: tests PASS and typecheck exits 0.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add app/features/course app/components/common/AppPagination.vue app/pages/course tests/unit/course tests/unit/common
+git add nuxt.config.ts app/features/course app/components/common/AppPagination.vue app/pages/course server/routes/__sitemap__/courses.ts tests/unit/course tests/unit/common
 git commit -m "feat: add course catalogue and detail pages"
 ```
 
@@ -306,8 +313,10 @@ git commit -m "feat: add course catalogue and detail pages"
 ### Task 6: Exam discovery and protected attempt shell
 
 **Files:**
+- Modify: `nuxt.config.ts`
 - Create: `app/features/exam/exam.types.ts`
 - Create: `app/features/exam/exam.service.ts`
+- Create: `app/features/exam/exam.sitemap.ts`
 - Create: `app/features/exam/components/ExamCard.vue`
 - Create: `app/features/exam/components/ExamOverview.vue`
 - Create: `app/features/exam/components/QuestionNavigator.vue`
@@ -316,26 +325,30 @@ git commit -m "feat: add course catalogue and detail pages"
 - Create: `app/pages/exam/index.vue`
 - Create: `app/pages/exam/[slug].vue`
 - Create: `app/pages/exam/attempt/[id].vue`
+- Create: `server/routes/__sitemap__/exams.ts`
 - Test: `tests/unit/exam/exam-pages.spec.ts`
+- Test: `tests/unit/exam/exam-sitemap.spec.ts`
 - Test: `tests/unit/exam/attempt-store.spec.ts`
 - Test: `tests/unit/middleware/auth.spec.ts`
 
 **Interfaces:**
 - Produces: `getExams(query): Promise<ApiList<ExamSummary>>`, `getExam(slug): Promise<ExamDetail>`.
 - Produces: `useAttemptStore()` for local answer draft, current question, and completion state only; grading remains backend-owned.
+- Produces: `/__sitemap__/exams`, returning every public `/exam/<encoded-slug>` URL with optional `lastmod`, and wires it only to the named `exams` sitemap.
 - Consumes: API client, SEO utilities, shared pagination, backend auth cookie/session endpoint.
+- Consumes: `collectSitemapUrls` from Task 3; sitemap reads remain public and must not carry the authenticated attempt session.
 
 - [ ] **Step 1: Write failing exam route tests**
 
-Assert public exam pages SSR their title/rules, unknown slug returns 404, attempt route emits `noindex`, and unauthenticated navigation redirects to `/login?redirect=<encoded path>`.
+Assert public exam pages SSR their title/rules, unknown slug returns 404, attempt route emits `noindex`, and unauthenticated navigation redirects to `/login?redirect=<encoded path>`. Assert the exam sitemap paginates through all public summaries, URL-encodes each slug, excludes `/exam/attempt/**`, and never uses session authentication.
 
 - [ ] **Step 2: Write failing attempt-store tests**
 
 Assert answers can be set and cleared, current question stays in bounds, and no score or authoritative grading method exists in the store.
 
-- [ ] **Step 3: Implement exam discovery, auth middleware, and attempt shell**
+- [ ] **Step 3: Implement exam discovery, sitemap projection, auth middleware, and attempt shell**
 
-Do not implement grading or anti-cheating. The attempt page may render questions supplied by the backend but must treat submission results as authoritative backend responses.
+Do not implement grading or anti-cheating. The attempt page may render questions supplied by the backend but must treat submission results as authoritative backend responses. Implement `/__sitemap__/exams` as an SEO-only projection through the public API client and wire it to the named `exams` sitemap.
 
 - [ ] **Step 4: Verify exam behavior**
 
@@ -346,7 +359,7 @@ Expected: tests PASS and typecheck exits 0.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/features/exam app/middleware/auth.ts app/pages/exam tests/unit/exam tests/unit/middleware
+git add nuxt.config.ts app/features/exam app/middleware/auth.ts app/pages/exam server/routes/__sitemap__/exams.ts tests/unit/exam tests/unit/middleware
 git commit -m "feat: add exam discovery and attempt shell"
 ```
 
@@ -355,9 +368,11 @@ git commit -m "feat: add exam discovery and attempt shell"
 ### Task 7: Group-buy and flash-sale promotions
 
 **Files:**
+- Modify: `nuxt.config.ts`
 - Create: `app/features/promotion/promotion.types.ts`
 - Create: `app/features/promotion/promotion.service.ts`
 - Create: `app/features/promotion/promotion-state.ts`
+- Create: `app/features/promotion/promotion.sitemap.ts`
 - Create: `app/features/promotion/components/PromotionGrid.vue`
 - Create: `app/features/promotion/components/PromotionHero.vue`
 - Create: `app/features/promotion/components/PromotionCountdown.vue`
@@ -365,13 +380,17 @@ git commit -m "feat: add exam discovery and attempt shell"
 - Create: `app/pages/group-buy/[slug].vue`
 - Create: `app/pages/flash-sale/index.vue`
 - Create: `app/pages/flash-sale/[slug].vue`
+- Create: `server/routes/__sitemap__/promotions.ts`
 - Test: `tests/unit/promotion/promotion-state.spec.ts`
 - Test: `tests/unit/promotion/promotion-pages.spec.ts`
+- Test: `tests/unit/promotion/promotion-sitemap.spec.ts`
 
 **Interfaces:**
 - Produces: `getGroupBuys`, `getGroupBuy`, `getFlashSales`, `getFlashSale` returning typed summaries/details.
 - Produces: `promotionState(now, startsAt, endsAt, remaining): 'upcoming' | 'active' | 'sold-out' | 'ended'`.
+- Produces: `/__sitemap__/promotions`, combining every public `/group-buy/<encoded-slug>` and `/flash-sale/<encoded-slug>` URL with optional `lastmod`, and wires it only to the named `promotions` sitemap.
 - Consumes: API client, SEO utilities, shared pagination.
+- Consumes: `collectSitemapUrls` from Task 3; both source lists are fetched publicly without user credentials.
 
 - [ ] **Step 1: Write failing promotion-state tests**
 
@@ -379,11 +398,11 @@ Use a fixed clock and assert boundary behavior at exact start/end timestamps, ze
 
 - [ ] **Step 2: Write failing promotion-page tests**
 
-Assert active promotions enable the CTA; upcoming, sold-out, and ended promotions disable it with distinct text; expired detail remains SSR-readable; unknown slug returns 404.
+Assert active promotions enable the CTA; upcoming, sold-out, and ended promotions disable it with distinct text; expired detail remains SSR-readable; unknown slug returns 404. Assert the promotion sitemap exhausts both paginated APIs, keeps the group-buy and flash-sale route prefixes distinct, URL-encodes slugs, and does not infer purchase eligibility or inventory from sitemap generation.
 
-- [ ] **Step 3: Implement shared promotion components and the four routes**
+- [ ] **Step 3: Implement shared promotion components, sitemap projection, and the four routes**
 
-SSR the authoritative start/end time and current state. Hydrate only the countdown display; never perform inventory deduction or trust the browser clock for purchase eligibility.
+SSR the authoritative start/end time and current state. Hydrate only the countdown display; never perform inventory deduction or trust the browser clock for purchase eligibility. Implement the combined `/__sitemap__/promotions` SEO projection through public API calls and wire it to the named `promotions` sitemap.
 
 - [ ] **Step 4: Verify promotions**
 
@@ -394,7 +413,7 @@ Expected: tests PASS and typecheck exits 0.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/features/promotion app/pages/group-buy app/pages/flash-sale tests/unit/promotion
+git add nuxt.config.ts app/features/promotion app/pages/group-buy app/pages/flash-sale server/routes/__sitemap__/promotions.ts tests/unit/promotion
 git commit -m "feat: add group-buy and flash-sale pages"
 ```
 
@@ -403,23 +422,29 @@ git commit -m "feat: add group-buy and flash-sale pages"
 ### Task 8: Community listing and article detail
 
 **Files:**
+- Modify: `nuxt.config.ts`
 - Create: `app/features/community/community.types.ts`
 - Create: `app/features/community/community.service.ts`
+- Create: `app/features/community/community.sitemap.ts`
 - Create: `app/features/community/components/PostCard.vue`
 - Create: `app/features/community/components/PostContent.vue`
 - Create: `app/features/community/components/PostMeta.vue`
 - Create: `app/pages/community/index.vue`
 - Create: `app/pages/community/[slug].vue`
+- Create: `server/routes/__sitemap__/community.ts`
 - Test: `tests/unit/community/community.service.spec.ts`
 - Test: `tests/unit/community/community-pages.spec.ts`
+- Test: `tests/unit/community/community-sitemap.spec.ts`
 
 **Interfaces:**
 - Produces: `getPosts(query): Promise<ApiList<PostSummary>>`, `getPost(slug): Promise<PostDetail>`.
+- Produces: `/__sitemap__/community`, returning every published `/community/<encoded-slug>` URL with optional `lastmod`, and wires it only to the named `community` sitemap.
 - Consumes: `articleSchema`, `breadcrumbSchema`, `usePageSeo`, API client, pagination.
+- Consumes: `collectSitemapUrls` from Task 3; unpublished posts must be absent from the public list contract rather than filtered from sensitive data in Nuxt.
 
 - [ ] **Step 1: Write failing community tests**
 
-Assert the list uses crawlable pagination, detail SSR-renders sanitized content and author/date metadata, JSON-LD uses `DiscussionForumPosting`, and unknown/unpublished slug returns 404.
+Assert the list uses crawlable pagination, detail SSR-renders sanitized content and author/date metadata, JSON-LD uses `DiscussionForumPosting`, and unknown/unpublished slug returns 404. Assert the community sitemap paginates through every public post, maps only published post slugs to `/community/<encoded-slug>`, carries `updatedAt` as `lastmod`, and never exposes unpublished records.
 
 - [ ] **Step 2: Run the tests and verify failure**
 
@@ -427,9 +452,9 @@ Run: `pnpm vitest run tests/unit/community`
 
 Expected: FAIL because the community feature does not exist.
 
-- [ ] **Step 3: Implement community pages**
+- [ ] **Step 3: Implement community sitemap projection and pages**
 
-Render only backend-sanitized HTML or a typed safe-content format. Do not add a client-side sanitizer as a substitute for backend sanitization; preserve semantic heading and link markup.
+Render only backend-sanitized HTML or a typed safe-content format. Do not add a client-side sanitizer as a substitute for backend sanitization; preserve semantic heading and link markup. Implement `/__sitemap__/community` as an SEO-only projection through public API calls and wire it to the named `community` sitemap.
 
 - [ ] **Step 4: Verify community routes**
 
@@ -440,7 +465,7 @@ Expected: tests PASS and typecheck exits 0.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/features/community app/pages/community tests/unit/community
+git add nuxt.config.ts app/features/community app/pages/community server/routes/__sitemap__/community.ts tests/unit/community
 git commit -m "feat: add SSR community pages"
 ```
 
@@ -519,13 +544,13 @@ Assert all six header destinations load, mobile navigation is keyboard-operable,
 
 - [ ] **Step 3: Write failing SEO and failure-state tests**
 
-For each public route assert nonempty title/description/canonical, one H1, indexable initial HTML, correct JSON-LD type, and real 404 status for unknown slugs. Assert API timeout displays the retry state and never a false “暂无内容”.
+For each public route assert nonempty title/description/canonical, one H1, indexable initial HTML, correct JSON-LD type, and real 404 status for unknown slugs. Assert the sitemap index exposes the pages, courses, exams, promotions, and community child sitemaps; each domain sitemap contains every fixture detail URL across multiple API pages, excludes filter/private/unpublished URLs, and remains identical when the incoming request carries a test Cookie. Assert API timeout displays the retry state and never a false “暂无内容”.
 
 - [ ] **Step 4: Run end-to-end tests and fix only integration gaps**
 
 Run: `pnpm test:e2e`
 
-Expected: all navigation, SEO, 404, auth-redirect, and timeout scenarios PASS.
+Expected: all navigation, SEO, sitemap, 404, auth-redirect, and timeout scenarios PASS.
 
 - [ ] **Step 5: Add production packaging and operator documentation**
 
@@ -550,8 +575,9 @@ git commit -m "test: verify and package education frontend"
 
 1. After Task 4, review the first vertical slice before expanding the same patterns to other domains.
 2. After Task 6, verify the public/private route boundary and confirm the backend authentication contract.
-3. After Task 9, run a security-focused review of cookies, redirects, caching, and rendered user data.
-4. After Task 10, run `superpowers:verification-before-completion`, then `superpowers:requesting-code-review` before declaring the implementation complete.
+3. After Task 8, verify all four dynamic sitemap projections exhaust pagination, map only public detail routes, and never vary by user Cookie.
+4. After Task 9, run a security-focused review of cookies, redirects, caching, and rendered user data.
+5. After Task 10, run `superpowers:verification-before-completion`, then `superpowers:requesting-code-review` before declaring the implementation complete.
 
 ## Deferred Follow-up Plans
 

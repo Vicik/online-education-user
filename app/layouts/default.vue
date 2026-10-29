@@ -1,3 +1,8 @@
+<script setup lang="ts">
+import AppFooter from '~/components/shell/AppFooter.vue'
+import AppHeader from '~/components/shell/AppHeader.vue'
+</script>
+
 <template>
   <div class="site-shell">
     <a

@@ -21,12 +21,11 @@ describe('AppHeader', () => {
     expect(links.map(link => link.attributes('href'))).toEqual(NAV_ITEMS.map(item => item.to))
   })
 
-  it('provides the same destinations in the mobile menu', async () => {
+  it('keeps a single desktop navigation without a mobile menu', async () => {
     const wrapper = await mountSuspended(AppHeader)
-    const navigation = wrapper.get('[data-testid="mobile-navigation"]')
 
-    expect(navigation.get('summary').text()).toBe('菜单')
-    expect(navigation.findAll('a').map(link => link.attributes('href')))
-      .toEqual(NAV_ITEMS.map(item => item.to))
+    expect(wrapper.find('[data-testid="mobile-navigation"]').exists()).toBe(false)
+    expect(wrapper.findAll('nav')).toHaveLength(1)
+    expect(wrapper.get('nav').attributes('aria-label')).toBe('主导航')
   })
 })

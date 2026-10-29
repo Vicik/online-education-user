@@ -33,7 +33,7 @@ const currentYear = useState('site-footer-year', () => new Date().getFullYear())
   display: flex;
   align-items: end;
   justify-content: space-between;
-  width: min(calc(100% - 2rem), var(--page-width));
+  width: var(--page-width);
   margin-inline: auto;
   padding-block: 2.5rem;
   gap: 2rem;
@@ -60,12 +60,5 @@ const currentYear = useState('site-footer-year', () => new Date().getFullYear())
 
 .footer-note {
   margin-top: 0.45rem;
-}
-
-@media (max-width: 36rem) {
-  .footer-inner {
-    align-items: start;
-    flex-direction: column;
-  }
 }
 </style>
