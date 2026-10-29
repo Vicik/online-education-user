@@ -90,7 +90,6 @@ const priceFormatter = new Intl.NumberFormat('zh-CN', {
 
 .card-body strong {
   display: -webkit-box;
-  min-height: 2.8em;
   overflow: hidden;
   color: #202938;
   font-size: 1rem;
@@ -102,7 +101,7 @@ const priceFormatter = new Intl.NumberFormat('zh-CN', {
 .card-prices {
   display: flex;
   align-items: baseline;
-  margin-top: 0.9rem;
+  margin-top: 0.45rem;
   gap: 0.7rem;
 }
 

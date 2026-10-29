@@ -1,10 +1,29 @@
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { PromotionStatus, PromotionSummary } from '../home.types'
-import { formatPromotionEndTime } from '../home-formatters'
+import { promotionCountdown } from '../home-formatters'
 
-defineProps<{
+const props = defineProps<{
   promotion: PromotionSummary
+  initialNow: number
 }>()
+
+const now = ref(props.initialNow)
+const countdown = computed(() => promotionCountdown(props.promotion.endsAt, now.value))
+let countdownTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  now.value = Date.now()
+  countdownTimer = setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (countdownTimer !== undefined) {
+    clearInterval(countdownTimer)
+  }
+})
 
 const priceFormatter = new Intl.NumberFormat('zh-CN', {
   minimumFractionDigits: 2,
@@ -45,7 +64,23 @@ const statusLabels: Record<PromotionStatus, string> = {
       </span>
       <span class="promotion-status">
         <span>{{ statusLabels[promotion.status] }}</span>
-        <time :datetime="promotion.endsAt">{{ formatPromotionEndTime(promotion.endsAt) }}</time>
+        <time
+          class="promotion-countdown"
+          :datetime="promotion.endsAt"
+          :aria-label="countdown ? `剩余 ${countdown.days} 天 ${countdown.hours} 小时 ${countdown.minutes} 分 ${countdown.seconds} 秒` : '活动已结束'"
+        >
+          <template v-if="countdown">
+            <span class="countdown-label">倒计时</span>
+            <span class="countdown-value">{{ countdown.days }}</span>
+            <span>天</span>
+            <span class="countdown-value">{{ countdown.hours }}</span>
+            <span class="countdown-separator">:</span>
+            <span class="countdown-value">{{ countdown.minutes }}</span>
+            <span class="countdown-separator">:</span>
+            <span class="countdown-value">{{ countdown.seconds }}</span>
+          </template>
+          <span v-else>已结束</span>
+        </time>
       </span>
     </NuxtLink>
   </article>
@@ -96,7 +131,6 @@ const statusLabels: Record<PromotionStatus, string> = {
 
 .promotion-body strong {
   display: -webkit-box;
-  min-height: 2.8em;
   overflow: hidden;
   color: #202938;
   font-size: 1rem;
@@ -108,7 +142,7 @@ const statusLabels: Record<PromotionStatus, string> = {
 .promotion-prices {
   display: flex;
   align-items: baseline;
-  margin-top: 0.9rem;
+  margin-top: 0.45rem;
   gap: 0.7rem;
 }
 
@@ -138,5 +172,30 @@ const statusLabels: Record<PromotionStatus, string> = {
 .promotion-status time {
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.promotion-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.18rem;
+  white-space: nowrap;
+}
+
+.countdown-label {
+  margin-right: 0.18rem;
+}
+
+.countdown-value {
+  min-width: 1.55rem;
+  padding: 0.18rem 0.25rem;
+  border-radius: 0.18rem;
+  background: white;
+  color: #e88909;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.countdown-separator {
+  opacity: 0.86;
 }
 </style>

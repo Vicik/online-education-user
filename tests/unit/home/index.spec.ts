@@ -97,11 +97,13 @@ describe('home page', () => {
     expect(wrapper.get('h1').text()).toBe('循序建立前端知识体系')
     expect(wrapper.get('[aria-label="精选学习内容"]')).toBeTruthy()
     expect(wrapper.findAll('h2').map(heading => heading.text())).toEqual([
-      '正在拼团',
       '最新课程',
       '推荐课程',
     ])
     expect(wrapper.get('a[href="/group-buy/vue-team"]').text()).toContain('Vue 3 小班拼团')
+    expect(wrapper.find('a[href="/group-buy"]').exists()).toBe(false)
+    expect(wrapper.get('a[href="/course?sort=latest"]').text()).toContain('查看更多课程')
+    expect(wrapper.get('a[href="/course?sort=recommended"]').text()).toContain('查看更多推荐')
     expect(wrapper.get('a[href="/course/nuxt-ssr"]').text()).toContain('Nuxt SSR 实战')
     expect(wrapper.get('a[href="/course/typescript-design"]').text()).toContain('TypeScript 类型设计')
     expect(usePageSeoMock).toHaveBeenCalledWith({
@@ -130,7 +132,6 @@ describe('home page', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
     expect(wrapper.findAll('h2').map(heading => heading.text())).toEqual([
-      '正在拼团',
       '最新课程',
       '推荐课程',
     ])

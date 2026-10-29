@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
+
+const route = useRoute()
 </script>
 
 <template>
@@ -10,14 +12,7 @@ import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
         to="/"
         aria-label="知序学堂首页"
       >
-        <span
-          class="brand-mark"
-          aria-hidden="true"
-        >知</span>
-        <span class="brand-copy">
-          <strong>{{ SITE_NAME }}</strong>
-          <small>循序而学 · 知行相长</small>
-        </span>
+        {{ SITE_NAME }}
       </NuxtLink>
 
       <nav
@@ -30,12 +25,45 @@ import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
           :key="item.to"
           :to="item.to"
           class="navigation-link"
-          active-class="is-active"
+          :class="{ 'is-active': item.to === '/' ? route.path === '/' : route.path.startsWith(item.to) }"
           :exact="item.to === '/'"
         >
           {{ item.label }}
         </NuxtLink>
       </nav>
+
+      <div
+        class="header-utilities"
+        data-testid="header-utilities"
+        aria-hidden="true"
+      >
+        <span class="search-icon">
+          <svg
+            viewBox="0 0 24 24"
+            focusable="false"
+          >
+            <circle
+              cx="10.8"
+              cy="10.8"
+              r="5.8"
+            />
+            <path d="m15.2 15.2 4.1 4.1" />
+          </svg>
+        </span>
+        <span class="account-avatar">
+          <svg
+            viewBox="0 0 32 32"
+            focusable="false"
+          >
+            <circle
+              cx="16"
+              cy="12"
+              r="6"
+            />
+            <path d="M6.5 28c.8-6 4.1-9 9.5-9s8.7 3 9.5 9" />
+          </svg>
+        </span>
+      </div>
     </div>
   </header>
 </template>
@@ -46,98 +74,95 @@ import { NAV_ITEMS, SITE_NAME } from '~/config/navigation'
   z-index: 30;
   top: 0;
   min-height: var(--header-height);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-line), transparent 10%);
-  background: color-mix(in srgb, var(--color-paper), transparent 6%);
-  backdrop-filter: blur(16px);
+  border-bottom: 1px solid #e8ebef;
+  background: var(--color-surface);
+  box-shadow: 0 0.18rem 0.8rem rgb(24 36 55 / 5%);
 }
 
 .header-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: var(--page-width);
   min-height: var(--header-height);
   margin-inline: auto;
-  gap: 2rem;
 }
 
 .brand {
-  display: inline-flex;
-  align-items: center;
   flex: 0 0 auto;
-  gap: 0.7rem;
-}
-
-.brand-mark {
-  display: grid;
-  width: 2.55rem;
-  height: 2.85rem;
-  place-items: center;
-  border-radius: 0.35rem 0.35rem 0.7rem 0.7rem;
-  background: var(--color-indigo);
-  box-shadow: 0 0.35rem 0 var(--color-amber);
-  color: white;
-  font-family: "Noto Serif SC", "Songti SC", serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.brand-copy {
-  display: grid;
-  line-height: 1.15;
-}
-
-.brand-copy strong {
-  font-family: "Noto Serif SC", "Songti SC", serif;
-  font-size: 1.12rem;
-  letter-spacing: 0.08em;
-}
-
-.brand-copy small {
-  margin-top: 0.25rem;
-  color: var(--color-muted);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
+  margin-right: 1.7rem;
+  color: #151b23;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .desktop-navigation {
   display: flex;
   align-self: stretch;
   align-items: center;
-  gap: 0.25rem;
+  margin-right: auto;
+  gap: 0.35rem;
 }
 
 .navigation-link {
-  position: relative;
   display: grid;
-  height: 100%;
-  min-width: 4rem;
+  min-width: 3.5rem;
+  height: 3rem;
   place-items: center;
-  padding: 0 0.85rem;
-  color: var(--color-muted);
-  font-size: 0.94rem;
-  font-weight: 600;
-  transition: color 160ms ease;
-}
-
-.navigation-link::after {
-  position: absolute;
-  top: 0;
-  width: 1.25rem;
-  height: 0.32rem;
-  border-radius: 0 0 0.3rem 0.3rem;
-  background: transparent;
-  content: "";
-  transition: height 160ms ease, background 160ms ease;
+  padding: 0 0.9rem;
+  border-radius: 0.3rem;
+  color: #202a35;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 .navigation-link:hover,
 .navigation-link.is-active {
-  color: var(--color-indigo);
+  background: #e9f3ff;
+  color: #3974a9;
 }
 
-.navigation-link.is-active::after {
-  height: 0.58rem;
-  background: var(--color-indigo);
+.header-utilities {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 2rem;
+}
+
+.search-icon,
+.account-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.search-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid #e2e6eb;
+  color: #1f2933;
+}
+
+.search-icon svg {
+  width: 1.45rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.account-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  background: #efb6c4;
+  color: #25364a;
+}
+
+.account-avatar svg {
+  width: 2rem;
+  fill: currentcolor;
 }
 </style>

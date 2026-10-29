@@ -1,8 +1,8 @@
 <script setup lang="ts">
 defineProps<{
-  title: string
-  moreHref: string
-  moreLabel: string
+  title?: string
+  moreHref?: string
+  moreLabel?: string
 }>()
 </script>
 
@@ -11,9 +11,15 @@ defineProps<{
     class="home-section"
     style="width: var(--page-width)"
   >
-    <header class="section-header">
-      <h2>{{ title }}</h2>
+    <header
+      v-if="title || (moreHref && moreLabel)"
+      class="section-header"
+    >
+      <h2 v-if="title">
+        {{ title }}
+      </h2>
       <NuxtLink
+        v-if="moreHref && moreLabel"
         :to="moreHref"
         class="section-more"
       >
