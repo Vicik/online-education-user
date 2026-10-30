@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import PromotionCard from '../../../app/features/home/components/PromotionCard.vue'
+import PromotionCard from '../../../app/components/promotion/PromotionCard.vue'
 import type { PromotionSummary } from '../../../app/features/home/home.types'
 
 const promotion: PromotionSummary = {
@@ -32,7 +32,7 @@ describe('PromotionCard', () => {
 
   it('renders and updates a day-hour-minute-second countdown', async () => {
     const wrapper = mount(PromotionCard, {
-      props: { promotion, initialNow: Date.now() },
+      props: { promotion, kind: 'group-buy', initialNow: Date.now() },
       global: { stubs: { NuxtLink: NuxtLinkStub } },
     })
 

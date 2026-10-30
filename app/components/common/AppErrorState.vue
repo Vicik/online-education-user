@@ -1,4 +1,12 @@
 <script setup lang="ts">
+withDefaults(defineProps<{
+  title: string
+  message: string
+  headingTag?: 'h1' | 'h2'
+}>(), {
+  headingTag: 'h2',
+})
+
 defineEmits<{
   retry: []
 }>()
@@ -6,7 +14,7 @@ defineEmits<{
 
 <template>
   <section
-    class="home-error"
+    class="app-error"
     role="alert"
   >
     <span
@@ -14,8 +22,10 @@ defineEmits<{
       aria-hidden="true"
     >!</span>
     <div>
-      <h1>首页内容暂时无法加载</h1>
-      <p>请检查网络连接后重试，课程内容不会因此丢失。</p>
+      <component :is="headingTag">
+        {{ title }}
+      </component>
+      <p>{{ message }}</p>
       <button
         type="button"
         @click="$emit('retry')"
@@ -27,7 +37,7 @@ defineEmits<{
 </template>
 
 <style scoped>
-.home-error {
+.app-error {
   display: flex;
   align-items: flex-start;
   width: min(calc(100% - 2rem), 46rem);
@@ -53,27 +63,30 @@ defineEmits<{
   place-items: center;
 }
 
-.home-error h1,
-.home-error p {
+.app-error h1,
+.app-error h2,
+.app-error p {
   margin: 0;
 }
 
-.home-error h1 {
+.app-error h1,
+.app-error h2 {
   font-family: "Noto Serif SC", "Songti SC", serif;
   font-size: 1.35rem;
+  font-weight: 700;
 }
 
-.home-error p {
+.app-error p {
   margin-top: 0.45rem;
   color: var(--color-muted);
 }
 
-.home-error button {
+.app-error button {
   margin-top: 1.2rem;
   padding: 0.65rem 1rem;
   border: 0;
   border-radius: 0.45rem;
-  background: var(--color-indigo);
+  background: var(--color-jade);
   color: white;
   cursor: pointer;
   font: inherit;

@@ -23,6 +23,18 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/': { swr: 300 },
+    '/login': {
+      robots: false,
+      headers: { 'cache-control': 'private, no-store, max-age=0' },
+    },
+    '/exam/attempt/**': {
+      robots: false,
+      headers: { 'cache-control': 'private, no-store, max-age=0' },
+    },
+    '/account/**': {
+      robots: false,
+      headers: { 'cache-control': 'private, no-store, max-age=0' },
+    },
   },
   compatibilityDate: '2026-10-28',
   typescript: {
@@ -54,8 +66,12 @@ export default defineNuxtConfig({
       exams: {
         sources: ['/__sitemap__/exams'],
       },
-      promotions: {},
-      community: {},
+      promotions: {
+        sources: ['/__sitemap__/promotions'],
+      },
+      community: {
+        sources: ['/__sitemap__/community'],
+      },
     },
   },
 })

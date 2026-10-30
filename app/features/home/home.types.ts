@@ -1,4 +1,7 @@
 import type { CourseSummary } from '../course/course.types'
+import type { PromotionSummary } from '../promotion/promotion.types'
+
+export type { PromotionStatus, PromotionSummary } from '../promotion/promotion.types'
 
 export interface BannerItem {
   id: string
@@ -9,21 +12,6 @@ export interface BannerItem {
   href: string
   width: number
   height: number
-}
-
-export type PromotionStatus = 'upcoming' | 'active' | 'sold-out' | 'ended'
-
-export interface PromotionSummary {
-  id: string
-  slug: string
-  title: string
-  imageUrl: string
-  imageAlt: string
-  price: number
-  originalPrice?: number
-  status: PromotionStatus
-  startsAt?: string
-  endsAt: string
 }
 
 export interface HomeResponse {

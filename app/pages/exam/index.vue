@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppPagination from '~/components/common/AppPagination.vue'
+import AppErrorState from '~/components/common/AppErrorState.vue'
 import ExamCard from '~/features/exam/components/ExamCard.vue'
 import { getExams } from '~/features/exam/exam.service'
 import { normalizePage } from '~/utils/normalizePage'
@@ -35,20 +36,12 @@ usePageSeo(computed(() => ({
       公开考试
     </h1>
 
-    <section
+    <AppErrorState
       v-if="error"
-      class="exam-state"
-      role="alert"
-    >
-      <h2>考试暂时无法加载</h2>
-      <p>{{ error.message }}</p>
-      <button
-        type="button"
-        @click="() => refresh()"
-      >
-        重新加载
-      </button>
-    </section>
+      title="考试暂时无法加载"
+      :message="error.message"
+      @retry="refresh"
+    />
     <p
       v-else-if="status === 'pending'"
       class="exam-state"
@@ -91,7 +84,6 @@ usePageSeo(computed(() => ({
 .exam-state { margin-top: 2rem; padding: 3rem; border: 1px solid var(--color-line); background: white; text-align: center; }
 .exam-state h2, .exam-state p { margin: 0; }
 .exam-state p { margin-top: 0.5rem; color: var(--color-muted); }
-.exam-state button { margin-top: 1rem; padding: 0.7rem 1rem; border: 0; background: var(--color-indigo); color: white; cursor: pointer; font: inherit; font-weight: 700; }
 @media (max-width: 78rem) { .exam-list { width: calc(100% - 2rem) !important; } }
 @media (max-width: 64rem) { .exam-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

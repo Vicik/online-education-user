@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import CourseCard from '~/features/home/components/CourseCard.vue'
+import CourseCard from '~/components/course/CourseCard.vue'
+import AppErrorState from '~/components/common/AppErrorState.vue'
+import PromotionCard from '~/components/promotion/PromotionCard.vue'
 import HomeBanner from '~/features/home/components/HomeBanner.vue'
-import HomeErrorState from '~/features/home/components/HomeErrorState.vue'
 import HomeSection from '~/features/home/components/HomeSection.vue'
-import PromotionCard from '~/features/home/components/PromotionCard.vue'
 import { getHome } from '~/features/home/home.service'
 
 const { data: home, error, status, refresh } = await useAsyncData('home', getHome)
@@ -23,7 +23,12 @@ usePageSeo({
       class="home-state-container"
       style="width: var(--page-width)"
     >
-      <HomeErrorState @retry="refresh" />
+      <AppErrorState
+        title="首页内容暂时无法加载"
+        message="请检查网络连接后重试，课程内容不会因此丢失。"
+        heading-tag="h1"
+        @retry="refresh"
+      />
     </div>
 
     <div
@@ -51,7 +56,9 @@ usePageSeo({
           v-for="promotion in home.groupBuys"
           :key="promotion.id"
           :promotion="promotion"
+          kind="group-buy"
           :initial-now="countdownNow"
+          heading-tag="h3"
         />
         <p
           v-if="home.groupBuys.length === 0"
@@ -70,6 +77,7 @@ usePageSeo({
           v-for="course in home.latestCourses"
           :key="course.id"
           :course="course"
+          heading-tag="h3"
         />
         <p
           v-if="home.latestCourses.length === 0"
@@ -88,6 +96,7 @@ usePageSeo({
           v-for="course in home.recommendedCourses"
           :key="course.id"
           :course="course"
+          heading-tag="h3"
         />
         <p
           v-if="home.recommendedCourses.length === 0"

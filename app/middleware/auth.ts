@@ -1,3 +1,6 @@
+import type { Session } from '~/features/auth/auth.types'
+import { useSessionStore } from '~/features/auth/stores/session'
+
 export type AuthSessionStatus = 'unknown' | 'authenticated' | 'anonymous'
 
 export function getAuthRedirect(
@@ -18,7 +21,35 @@ export function runAuthGuard<T>(
   return redirect ? navigate(redirect) : undefined
 }
 
-export default defineNuxtRouteMiddleware((to) => {
+export async function runSessionGuard<T>(
+  fullPath: string,
+  currentSession: Session | null,
+  hydrate: () => Promise<Session | null>,
+  setStatus: (status: AuthSessionStatus) => void,
+  navigate: (path: string) => T,
+): Promise<T | undefined> {
+  let sessionStatus: AuthSessionStatus
+
+  try {
+    const session = currentSession ?? await hydrate()
+    sessionStatus = session ? 'authenticated' : 'anonymous'
+  }
+  catch {
+    sessionStatus = 'anonymous'
+  }
+
+  setStatus(sessionStatus)
+  return runAuthGuard(fullPath, sessionStatus, navigate)
+}
+
+export default defineNuxtRouteMiddleware(async (to) => {
+  const sessionStore = useSessionStore()
   const sessionStatus = useState<AuthSessionStatus>('auth:session-status', () => 'unknown')
-  return runAuthGuard(to.fullPath, sessionStatus.value, navigateTo)
+  return runSessionGuard(
+    to.fullPath,
+    sessionStore.session,
+    () => sessionStore.hydrate(),
+    status => sessionStatus.value = status,
+    navigateTo,
+  )
 })

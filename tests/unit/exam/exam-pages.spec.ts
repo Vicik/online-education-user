@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ExamDetailPage from '../../../app/pages/exam/[slug].vue'
 import ExamIndexPage from '../../../app/pages/exam/index.vue'
 import AttemptPage from '../../../app/pages/exam/attempt/[id].vue'
+import { useSessionStore } from '../../../app/features/auth/stores/session'
 import type { ExamDetail, ExamSummary } from '../../../app/features/exam/exam.types'
 
 const { showErrorMock, usePageSeoMock } = vi.hoisted(() => ({
@@ -161,17 +162,20 @@ describe('exam pages', () => {
     }))
   })
 
-  it('marks the protected attempt shell noindex without grading in the browser', async () => {
+  it('marks the authenticated attempt shell noindex without grading in the browser', async () => {
+    const sessionStore = useSessionStore()
+    sessionStore.setSession({ user: { id: 'user-1', displayName: '林知序' } })
     const wrapper = await mountSuspended(AttemptPage, { route: '/exam/attempt/exam-1' })
 
     expect(wrapper.get('.attempt-shell').element.tagName).toBe('DIV')
-    expect(wrapper.get('h1').text()).toBe('正在确认登录状态')
-    expect(wrapper.text()).not.toContain('考试编号：')
+    expect(wrapper.get('h1').text()).toBe('答题界面')
+    expect(wrapper.text()).toContain('考试编号：exam-1')
     expect(wrapper.text()).toContain('最终成绩以服务端提交结果为准')
     expect(toValue(usePageSeoMock.mock.calls[0]![0])).toMatchObject({
       path: '/exam/attempt/exam-1',
       noindex: true,
     })
     expect(wrapper.text()).not.toContain('本地判分')
+    sessionStore.setSession(null)
   })
 })

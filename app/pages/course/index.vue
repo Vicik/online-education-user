@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppPagination from '~/components/common/AppPagination.vue'
+import AppErrorState from '~/components/common/AppErrorState.vue'
 import CourseFilters from '~/features/course/components/CourseFilters.vue'
 import CourseGrid from '~/features/course/components/CourseGrid.vue'
 import { getCourses } from '~/features/course/course.service'
@@ -82,20 +83,12 @@ usePageSeo(computed(() => ({
       :sort="sort"
     />
 
-    <section
+    <AppErrorState
       v-if="error"
-      class="course-state"
-      role="alert"
-    >
-      <h2>课程暂时无法加载</h2>
-      <p>{{ error.message }}</p>
-      <button
-        type="button"
-        @click="() => refresh()"
-      >
-        重新加载
-      </button>
-    </section>
+      title="课程暂时无法加载"
+      :message="error.message"
+      @retry="refresh"
+    />
     <p
       v-else-if="status === 'pending'"
       class="course-state"
@@ -154,18 +147,6 @@ usePageSeo(computed(() => ({
 .course-state p {
   margin-top: 0.5rem;
   color: var(--color-muted);
-}
-
-.course-state button {
-  margin-top: 1.2rem;
-  padding: 0.65rem 1rem;
-  border: 0;
-  border-radius: 0.25rem;
-  background: var(--color-jade);
-  color: white;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 700;
 }
 
 @media (max-width: 78rem) {

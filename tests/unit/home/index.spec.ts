@@ -106,6 +106,9 @@ describe('home page', () => {
     expect(wrapper.get('a[href="/course?sort=recommended"]').text()).toContain('查看更多推荐')
     expect(wrapper.get('a[href="/course/nuxt-ssr"]').text()).toContain('Nuxt SSR 实战')
     expect(wrapper.get('a[href="/course/typescript-design"]').text()).toContain('TypeScript 类型设计')
+    expect(wrapper.get('a[href="/course/nuxt-ssr"] .course-card-body h3').text()).toBe('Nuxt SSR 实战')
+    expect(wrapper.get('a[href="/group-buy/vue-team"] .promotion-card-body h3').text()).toBe('Vue 3 小班拼团')
+    expect(wrapper.get('a[href="/group-buy/vue-team"] .promotion-kind').text()).toBe('2 人拼团')
     expect(usePageSeoMock).toHaveBeenCalledWith({
       title: '在线课程、考试与学习社区｜知序学堂',
       description: '在知序学堂发现最新课程、精选课程和限时拼团，用清晰的学习路径稳步提升。',
