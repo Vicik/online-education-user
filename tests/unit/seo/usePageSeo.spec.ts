@@ -1,5 +1,23 @@
-import { describe, expect, it } from 'vitest'
-import { resolvePageSeo } from '~/composables/usePageSeo'
+import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
+import { computed, defineComponent, ref, toValue } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { resolvePageSeo, usePageSeo } from '~/composables/usePageSeo'
+
+const { useHeadMock, useSeoMetaMock, useSchemaOrgMock } = vi.hoisted(() => ({
+  useHeadMock: vi.fn(),
+  useSeoMetaMock: vi.fn(),
+  useSchemaOrgMock: vi.fn(),
+}))
+
+mockNuxtImport('useHead', () => useHeadMock)
+mockNuxtImport('useSeoMeta', () => useSeoMetaMock)
+mockNuxtImport('useSchemaOrg', () => useSchemaOrgMock)
+
+beforeEach(() => {
+  useHeadMock.mockClear()
+  useSeoMetaMock.mockClear()
+  useSchemaOrgMock.mockClear()
+})
 
 describe('resolvePageSeo', () => {
   it('输出绝对 canonical、基础元数据、noindex 与 JSON-LD', () => {
@@ -46,5 +64,48 @@ describe('resolvePageSeo', () => {
     }])
     expect(resolved.meta.robots).toBe('index, follow')
     expect(resolved.schema).toEqual([])
+  })
+
+  it('响应式输入变化后更新 canonical、robots、标题与 Open Graph URL', async () => {
+    const page = ref(1)
+
+    await mountSuspended(defineComponent({
+      setup() {
+        usePageSeo(computed(() => ({
+          title: page.value === 1 ? '全部课程｜知序学堂' : `课程第 ${page.value} 页｜知序学堂`,
+          description: '查看全部课程',
+          path: page.value === 1 ? '/course' : `/course?page=${page.value}`,
+          noindex: page.value > 1,
+        })))
+      },
+      template: '<div />',
+    }))
+
+    const headInput = useHeadMock.mock.calls[0]![0]
+    const metaInput = useSeoMetaMock.mock.calls[0]![0]
+
+    const readMeta = () => Object.fromEntries(
+      Object.entries(metaInput).map(([key, value]) => [key, toValue(value)]),
+    )
+
+    expect(toValue(headInput)).toEqual(expect.objectContaining({
+      title: '全部课程｜知序学堂',
+      link: [{ rel: 'canonical', href: 'http://localhost:3000/course' }],
+    }))
+    expect(readMeta()).toEqual(expect.objectContaining({
+      robots: 'index, follow',
+      ogUrl: 'http://localhost:3000/course',
+    }))
+
+    page.value = 2
+
+    expect(toValue(headInput)).toEqual(expect.objectContaining({
+      title: '课程第 2 页｜知序学堂',
+      link: [{ rel: 'canonical', href: 'http://localhost:3000/course?page=2' }],
+    }))
+    expect(readMeta()).toEqual(expect.objectContaining({
+      robots: 'noindex, nofollow',
+      ogUrl: 'http://localhost:3000/course?page=2',
+    }))
   })
 })

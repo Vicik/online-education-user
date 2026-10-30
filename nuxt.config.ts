@@ -48,8 +48,12 @@ export default defineNuxtConfig({
       pages: {
         includeAppSources: true,
       },
-      courses: {},
-      exams: {},
+      courses: {
+        sources: ['/__sitemap__/courses'],
+      },
+      exams: {
+        sources: ['/__sitemap__/exams'],
+      },
       promotions: {},
       community: {},
     },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CourseSummary } from '../home.types'
+import type { CourseSummary } from '../../course/course.types'
 
 defineProps<{
   course: CourseSummary

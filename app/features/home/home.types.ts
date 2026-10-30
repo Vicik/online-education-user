@@ -1,3 +1,5 @@
+import type { CourseSummary } from '../course/course.types'
+
 export interface BannerItem {
   id: string
   title: string
@@ -7,16 +9,6 @@ export interface BannerItem {
   href: string
   width: number
   height: number
-}
-
-export interface CourseSummary {
-  id: string
-  slug: string
-  title: string
-  imageUrl: string
-  imageAlt: string
-  price: number
-  originalPrice?: number
 }
 
 export type PromotionStatus = 'upcoming' | 'active' | 'sold-out' | 'ended'

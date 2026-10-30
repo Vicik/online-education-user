@@ -1,3 +1,4 @@
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { PageSeoInput } from '~/lib/seo/seo.types'
 
 export function resolvePageSeo(input: PageSeoInput, siteUrl: string) {
@@ -27,14 +28,18 @@ export function resolvePageSeo(input: PageSeoInput, siteUrl: string) {
   }
 }
 
-export function usePageSeo(input: PageSeoInput): void {
+export function usePageSeo(input: MaybeRefOrGetter<PageSeoInput>): void {
   const config = useRuntimeConfig()
-  const resolved = resolvePageSeo(input, config.public.siteUrl)
+  const resolved = computed(() => resolvePageSeo(toValue(input), config.public.siteUrl))
 
-  useHead(resolved.head)
-  useSeoMeta(resolved.meta)
-
-  if (resolved.schema.length > 0) {
-    useSchemaOrg(resolved.schema)
-  }
+  useHead(() => resolved.value.head)
+  useSeoMeta({
+    description: () => resolved.value.meta.description,
+    robots: () => resolved.value.meta.robots,
+    ogTitle: () => resolved.value.meta.ogTitle,
+    ogDescription: () => resolved.value.meta.ogDescription,
+    ogUrl: () => resolved.value.meta.ogUrl,
+    ogImage: () => resolved.value.meta.ogImage,
+  })
+  useSchemaOrg(computed(() => resolved.value.schema))
 }
